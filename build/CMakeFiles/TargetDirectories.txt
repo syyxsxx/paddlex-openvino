@@ -1,0 +1,4 @@
+/wangsiyuan06/PaddleX/deploy/openvino/build/CMakeFiles/rebuild_cache.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/CMakeFiles/edit_cache.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/CMakeFiles/classifier.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/CMakeFiles/ext-yaml-cpp.dir

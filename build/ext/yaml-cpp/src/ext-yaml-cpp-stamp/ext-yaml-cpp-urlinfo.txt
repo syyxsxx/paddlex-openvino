@@ -1,0 +1,3 @@
+repository='external project URL'
+module='/wangsiyuan06/PaddleX/deploy/openvino/deps/yaml-cpp.zip'
+tag=''

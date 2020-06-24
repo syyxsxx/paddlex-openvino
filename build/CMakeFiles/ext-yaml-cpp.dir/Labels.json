@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/CMakeFiles/ext-yaml-cpp"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/CMakeFiles/ext-yaml-cpp.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/CMakeFiles/ext-yaml-cpp-complete.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-stamp/ext-yaml-cpp-install.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-stamp/ext-yaml-cpp-mkdir.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-stamp/ext-yaml-cpp-download.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-stamp/ext-yaml-cpp-update.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-stamp/ext-yaml-cpp-patch.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-stamp/ext-yaml-cpp-configure.rule"
+		},
+		{
+			"file" : "/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-stamp/ext-yaml-cpp-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ext-yaml-cpp"
+		],
+		"name" : "ext-yaml-cpp"
+	}
+}

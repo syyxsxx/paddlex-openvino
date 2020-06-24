@@ -1,0 +1,6 @@
+/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-build/CMakeFiles/rebuild_cache.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-build/CMakeFiles/edit_cache.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-build/CMakeFiles/debuggable.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-build/CMakeFiles/releasable.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-build/CMakeFiles/yaml-cpp.dir
+/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp-build/CMakeFiles/format.dir

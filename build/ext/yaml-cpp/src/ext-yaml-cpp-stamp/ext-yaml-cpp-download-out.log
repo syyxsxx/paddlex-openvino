@@ -1,0 +1,8 @@
+-- extracting...
+     src='/wangsiyuan06/PaddleX/deploy/openvino/deps/yaml-cpp.zip'
+     dst='/wangsiyuan06/PaddleX/deploy/openvino/build/ext/yaml-cpp/src/ext-yaml-cpp'
+-- extracting... [tar xfz]
+-- extracting... [analysis]
+-- extracting... [rename]
+-- extracting... [clean up]
+-- extracting... done

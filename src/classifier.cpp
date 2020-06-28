@@ -22,7 +22,7 @@
 #include "include/paddlex/paddlex.h"
 
 DEFINE_string(model_dir, "", "Path of inference model");
-DEFINE_string(cfg_dir, "", "Path of inference model");
+DEFINE_string(cfg_dir, "", "Path of PaddelX model yml file");
 DEFINE_string(device, "CPU", "Device name");
 DEFINE_string(image, "", "Path of test image file");
 DEFINE_string(image_list, "", "Path of test image list file");

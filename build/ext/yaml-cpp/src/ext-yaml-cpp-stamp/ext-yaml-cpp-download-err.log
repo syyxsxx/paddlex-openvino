@@ -1,4 +1,0 @@
-CMake Warning at ext-yaml-cpp-stamp/verify-ext-yaml-cpp.cmake:15 (message):
-  File will not be verified since no URL_HASH specified
-
-

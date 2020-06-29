@@ -12,89 +12,149 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
 import sys
 import os
-import cv2 as cv
+import os.path as osp
+import cv2
 import numpy as np
+import yaml
 from six import text_type as _text_type
 from openvino.inference_engine import IECore
 from utils import logging 
 
 
-def arg_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--model_dir",
-        "-m",
-        type=str,
-        default=None,
-        help="path to openvino model .xml file")
-    parser.add_argument(
-        "--device",
-        "-d",
-        type=str,
-        default='CPU',
-        help="Specify the target device to infer on:[CPU, GPU, FPGA, HDDL, MYRIAD,HETERO]"
-             "Default value is CPU")
-    parser.add_argument(
-        "--img",
-        "-i",
-        type=str,
-        default=None,
-        help="Path to a folder with images or path to an image files")
-
-    parser.add_argument(
-        "--cfg_dir",
-        "-c",
-        type=str,
-        default=None,
-        help="Path to PaddelX model yml file")
-
-    return parser
 
 
-def main():
-    parser = arg_parser()
-    args = parser.parse_args()
-    model_xml = args.model_dir
-    model_bin = os.path.splitext(model_xml)[0] + ".bin"
-    with open(cfg_dir) as f:
-        info = yaml.load(f.read(), Loader=yaml.Loader)
+class Predictor:
+    def __init__(self,
+                 model_xml,
+                 model_yaml,
+                 device=="CPU");
+       """
+          Args:
+       """
+        self.device = device
+        if not osp.exists(model_xml):
+            logging.error("model xml file is not exists in {}".format(model_xml))
+        self.model_xml = model_xml
+        self.model_bin = osp.splitext(model_xml)[0] + ".bin"
+        if not osp.exists(model_yaml):
+            logging,error("model yaml file is not exists in {}".format(model_yaml))
+        with open(model_yaml) as f:
+            self.info = yaml.load(f.read(), Loader=yaml.Loader)
+        self.model_type = self.info['_Attributes']['model_type']
+        self.model_name = self.info['Model']
+        self.num_classes = self.info['_Attributes']['num_classes']
+        self.labels = self.info['_Attributes']['labels']
+        if self.info['Model'] == 'MaskRCNN':
+            if self.info['_init_params']['with_fpn']:
+                self.mask_head_resolution = 28
+            else:
+                self.mask_head_resolution = 14
+        transforms_mode = self.info.get('TransformsMode', 'RGB')
+        if transforms_mode == 'RGB':
+            to_rgb = True
+        else:
+            to_rgb = False
+        self.transforms = self.build_transforms(self.info['Transforms'], to_rgb)
+        self.predictor,self.net = self.create_predictor()
 
-    #initialization for specified device
-    logging.info("Creating Inference Engine")
-    ie = IECore()
-    logging.info("Loading network files:\n\t{}\n\t{}".format(model_xml, model_bin))
-    net = ie.read_network(model=model_xml,weights=model_bin)
 
-    logging.info("Perparing input blobs")
-    input_blob = next(iter(net.input_info))
-    out_blob = next(iter(net.outputs))
-    net.batch_size = 1
 
-    #Read and pre-process input images
-    n, c, h, w = net.input_info[input_blob].input_data.shape
-    images = np.ndarray(shape=(n,c,h,w))
-    for i in range(n):
-        image = cv.imread(args.img)
-        image = cv.resize(image,(w,h))
-        image = image.transpose((2,0,1))
-        images[i] = image
+
+    def creat_predictor(self):
+
+        #initialization for specified device
+        logging.info("Creating Inference Engine")
+        ie = IECore()
+        logging.info("Loading network files:\n\t{}\n\t{}".format(self.model_xml, self.model_bin))
+        net = ie.read_network(model=model_xml,weights=model_bin)
+        net.batch_size = 1
+        exec_net = ie.load_network(network=net,device_name=args.device)
+        return exec_net, net
+
+
+    def build_transforms(self, transforms_info, to_rgb=True):
+        if self.model_type == "classifier":
+            import transforms.cls_transforms as transforms
+        elif self.model_type == "detector":
+            import transforms.det_transforms as transforms
+        elif self.model_type == "segmenter":
+            import transforms.seg_transforms as transforms
+        op_list = list()
+        for op_info in transforms_info:
+            op_name = list(op_info.keys())[0]
+            op_attr = op_info[op_name]
+            if not hasattr(transforms, op_name):
+                raise Exception(
+                    "There's no operator named '{}' in transforms of {}".
+                    format(op_name, self.model_type))
+            op_list.append(getattr(transforms, op_name)(**op_attr))
+        eval_transforms = transforms.Compose(op_list)
+        if hasattr(eval_transforms, 'to_rgb'):
+            eval_transforms.to_rgb = to_rgb
+        self.arrange_transforms(eval_transforms)
+        return eval_transforms    
+ 
+    def arrange_transforms(self, transforms):
+        if self.model_type == 'classifier':
+            arrange_transform = paddlex.cls.transforms.ArrangeClassifier
+        elif self.model_type == 'segmenter':
+            arrange_transform = paddlex.seg.transforms.ArrangeSegmenter
+        elif self.model_type == 'detector':
+            arrange_name = 'Arrange{}'.format(self.model_name)
+            arrange_transform = getattr(paddlex.det.transforms, arrange_name)
+        else:
+            raise Exception("Unrecognized model type: {}".format(
+                self.model_type))
+        if type(transforms.transforms[-1]).__name__.startswith('Arrange'):
+            transforms.transforms[-1] = arrange_transform(mode='test')
+        else:
+            transforms.transforms.append(arrange_transform(mode='test'))
+
+
+    def raw_predict(self, images):
+        input_blob = next(iter(self.net.input_info))
+        out_blob = next(iter(self.net.outputs)) 
+        #Start sync inference
+        logging.info("Starting inference in synchronous mode")
+        res = exec_net.infer(inputs={input_blob:images})
     
-    logging.info("Batch size is {}".format(n))
-    exec_net = ie.load_network(network=net,device_name=args.device)
+        #Processing output blob
+        logging.info("Processing output blob")
+        res = res[out_blob]
+        print("res: ",res)
 
-    #Start sync inference
-    logging.info("Starting inference in synchronous mode")
-    res = exec_net.infer(inputs={input_blob:images})
-    
-    #Processing output blob
-    logging.info("Processing output blob")
-    res = res[out_blob]
-    print("res: ",res)
+    def preprocess(self, image):
+        res = dict()
+        if self.model_type == "classifier":
+            im, = self.transforms(image)
+            im = np.expand_dims(im, axis=0).copy()
+            res['image'] = im
+        elif self.model_type == "detector":
+            if self.model_name == "YOLOv3":
+                im, im_shape = self.transforms(image)
+                im = np.expand_dims(im, axis=0).copy()
+                im_shape = np.expand_dims(im_shape, axis=0).copy()
+                res['image'] = im
+                res['im_size'] = im_shape
+            if self.model_name.count('RCNN') > 0:
+                im, im_resize_info, im_shape = self.transforms(image)
+                im = np.expand_dims(im, axis=0).copy()
+                im_resize_info = np.expand_dims(im_resize_info, axis=0).copy()
+                im_shape = np.expand_dims(im_shape, axis=0).copy()
+                res['image'] = im
+                res['im_info'] = im_resize_info
+                res['im_shape'] = im_shape
+        elif self.model_type == "segmenter":
+            im, im_info = self.transforms(image)
+            im = np.expand_dims(im, axis=0).copy()
+            res['image'] = im
+            res['im_info'] = im_info
+        return res
 
 
-if __name__ == "__main__":
-    main()
+def predict(self, image, topk=1, threshold=0.5):
+        preprocessed_input = self.preprocess(image)
+        model_pred = self.raw_predict(preprocessed_input)
 

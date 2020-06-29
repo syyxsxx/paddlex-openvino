@@ -18,7 +18,7 @@ import random
 import os.path as osp
 import numpy as np
 from PIL import Image, ImageEnhance
-from utils.logging as logging
+import paddlex.utils.logging as logging
 
 
 class ClsTransform:

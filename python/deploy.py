@@ -29,10 +29,7 @@ class Predictor:
     def __init__(self,
                  model_xml,
                  model_yaml,
-                 device=="CPU");
-       """
-          Args:
-       """
+                 device="CPU"):
         self.device = device
         if not osp.exists(model_xml):
             logging.error("model xml file is not exists in {}".format(model_xml))
@@ -62,15 +59,15 @@ class Predictor:
 
 
 
-    def creat_predictor(self):
+    def create_predictor(self):
 
         #initialization for specified device
         logging.info("Creating Inference Engine")
         ie = IECore()
         logging.info("Loading network files:\n\t{}\n\t{}".format(self.model_xml, self.model_bin))
-        net = ie.read_network(model=model_xml,weights=model_bin)
+        net = ie.read_network(model=self.model_xml,weights=self.model_bin)
         net.batch_size = 1
-        exec_net = ie.load_network(network=net,device_name=args.device)
+        exec_net = ie.load_network(network=net,device_name=self.device)
         return exec_net, net
 
 
@@ -96,21 +93,24 @@ class Predictor:
         self.arrange_transforms(eval_transforms)
         return eval_transforms    
  
-    def arrange_transforms(self, transforms):
+    def arrange_transforms(self, eval_transforms):
         if self.model_type == 'classifier':
-            arrange_transform = paddlex.cls.transforms.ArrangeClassifier
+            import transforms.cls_transforms as transforms
+            arrange_transform = transforms.ArrangeClassifier
         elif self.model_type == 'segmenter':
-            arrange_transform = paddlex.seg.transforms.ArrangeSegmenter
+            import transforms.det_transforms as transforms
+            arrange_transform = transforms.ArrangeSegmenter
         elif self.model_type == 'detector':
+            import transforms.seg_transforms as transforms
             arrange_name = 'Arrange{}'.format(self.model_name)
-            arrange_transform = getattr(paddlex.det.transforms, arrange_name)
+            arrange_transform = getattr(transforms, arrange_name)
         else:
             raise Exception("Unrecognized model type: {}".format(
                 self.model_type))
-        if type(transforms.transforms[-1]).__name__.startswith('Arrange'):
-            transforms.transforms[-1] = arrange_transform(mode='test')
+        if type(eval_transforms.transforms[-1]).__name__.startswith('Arrange'):
+            eval_transforms.transforms[-1] = arrange_transform(mode='test')
         else:
-            transforms.transforms.append(arrange_transform(mode='test'))
+            eval_transforms.transforms.append(arrange_transform(mode='test'))
 
 
     def raw_predict(self, images):
@@ -118,7 +118,7 @@ class Predictor:
         out_blob = next(iter(self.net.outputs)) 
         #Start sync inference
         logging.info("Starting inference in synchronous mode")
-        res = exec_net.infer(inputs={input_blob:images})
+        res = self.predictor.infer(inputs={input_blob:images})
     
         #Processing output blob
         logging.info("Processing output blob")
@@ -130,7 +130,7 @@ class Predictor:
         if self.model_type == "classifier":
             im, = self.transforms(image)
             im = np.expand_dims(im, axis=0).copy()
-            res['image'] = im
+            #res['image'] = im
         '''elif self.model_type == "detector":
             if self.model_name == "YOLOv3":
                 im, im_shape = self.transforms(image)
@@ -154,7 +154,7 @@ class Predictor:
         return im
 
 
-def predict(self, image, topk=1, threshold=0.5):
+    def predict(self, image, topk=1, threshold=0.5):
         preprocessed_input = self.preprocess(image)
         model_pred = self.raw_predict(preprocessed_input)
 

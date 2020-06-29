@@ -21,7 +21,7 @@ import numpy as np
 from PIL import Image
 import cv2
 from collections import OrderedDict
-import paddlex.utils.logging as logging
+import utils.logging as logging
 
 
 class SegTransform:

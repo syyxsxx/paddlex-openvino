@@ -27,7 +27,7 @@ from PIL import Image, ImageEnhance
 from .imgaug_support import execute_imgaug
 from .ops import *
 from .box_utils import *
-import paddlex.utils.logging as logging
+import utils.logging as logging
 
 
 class DetTransform:

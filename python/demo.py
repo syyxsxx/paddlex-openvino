@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+import os
 import argparse
 import deploy
 
@@ -57,9 +59,9 @@ def main():
 
     #model init
     if("CPU" not in args.device):
-        predictor = deplpy.Predictor(model_xml.model_yaml,args.device)
+        predictor = deploy.Predictor(model_xml,model_yaml,args.device)
     else:
-        predictor = deplpy.Predictor(model_xml.model_yaml)
+        predictor = deploy.Predictor(model_xml,model_yaml)
     
     #predict
     im_path = args.img

@@ -126,12 +126,12 @@ class Predictor:
         print("res: ",res)
 
     def preprocess(self, image):
-        res = dict()
+        
         if self.model_type == "classifier":
             im, = self.transforms(image)
             im = np.expand_dims(im, axis=0).copy()
             res['image'] = im
-        elif self.model_type == "detector":
+        '''elif self.model_type == "detector":
             if self.model_name == "YOLOv3":
                 im, im_shape = self.transforms(image)
                 im = np.expand_dims(im, axis=0).copy()
@@ -150,8 +150,8 @@ class Predictor:
             im, im_info = self.transforms(image)
             im = np.expand_dims(im, axis=0).copy()
             res['image'] = im
-            res['im_info'] = im_info
-        return res
+            res['im_info'] = im_info'''
+        return im
 
 
 def predict(self, image, topk=1, threshold=0.5):

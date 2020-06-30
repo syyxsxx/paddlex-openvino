@@ -105,7 +105,7 @@ if (NOT WIN32)
 endif()
 
 set(DEPS ${DEPS} ${OpenCV_LIBS})
-add_executable(classifier src/classifier.cpp src/transforms.cpp src/paddlex.cpp)
+add_executable(classifier demo/classifier.cpp src/transforms.cpp src/paddlex.cpp)
 ADD_DEPENDENCIES(classifier ext-yaml-cpp)
 target_link_libraries(classifier ${DEPS})
 

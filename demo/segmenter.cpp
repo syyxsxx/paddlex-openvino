@@ -49,13 +49,54 @@ int main(int argc, char** argv) {
     std::cerr << "--cfg_dir need to be defined" << std::endl;
     return -1;
   }
-  PaddleX::Model model;
+  if (FLAGS_image == "" & FLAGS_image_list == "") {
+    std::cerr << "--image or --image_list need to be defined" << std::endl;
+    return -1;
   }
+
+  //
+  PaddleX::Model model; 
   model.Init(FLAGS_model_dir, FLAGS_cfg_dir, FLAGS_device);
   
-  double total_running_time_s = 0.0;
-  double total_imread_time_s = 0.0;
   int imgs = 1;
   auto colormap = PaddleX::GenerateColorMap(model.labels.size());
   
-    
+  if (FLAGS_image_list != "") {
+    /*std::ifstream inf(FLAGS_image_list);
+    if (!inf) {
+      std::cerr << "Fail to open file " << FLAGS_image_list << std::endl;
+      return -1;
+    }
+    std::string image_path;
+    std::vector<std::string> image_paths;
+    while (getline(inf, image_path)) {
+      image_paths.push_back(image_path);
+    }  
+    imgs = image_paths.size();
+    for (int i = 0; i < image_paths.size(); i += FLAGS_batch_size) {
+    int im_vec_size =
+          std::min(static_cast<int>(image_paths.size()), i + FLAGS_batch_size);
+      std::vector<cv::Mat> im_vec(im_vec_size - i);
+      std::vector<PaddleX::SegResult> results(im_vec_size - i,
+                                              PaddleX::SegResult());
+    int thread_num = std::min(FLAGS_thread_num, im_vec_size - i);
+    #pragma omp parallel for num_threads(thread_num)
+    for (int j = i; j < im_vec_size; ++j) {
+      im_vec[j - i] = std::move(cv::imread(image_paths[j], 1));
+    }
+    auto imread_end = system_clock::now();
+    model.predict(im_vec, &results, thread_num);*/
+  }else{
+    PaddleX::SegResult result;
+    cv::Mat im = cv::imread(FLAGS_image, 1);
+    model.predict(im, &result);
+    //
+    cv::Mat vis_img = PaddleX::Visualize(im, result, model.labels, colormap);
+    std::string save_path =
+        PaddleX::generate_save_path(FLAGS_save_dir, FLAGS_image);
+    cv::imwrite(save_path, vis_img);
+    result.clear();
+    std::cout << "Visualized output saved as " << save_path << std::endl;
+  }
+  return 0;
+}

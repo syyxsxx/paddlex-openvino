@@ -38,7 +38,15 @@ def arg_parser():
         "-i",
         type=str,
         default=None,
-        help="Path to a folder with images or path to an image files")
+        help="path to an image files")
+
+    parser.add_argument(
+        "--img_list",
+        "-l",
+        type=str,
+        default=None,
+        help="Path to a imglist")
+
 
     parser.add_argument(
         "--cfg_dir",

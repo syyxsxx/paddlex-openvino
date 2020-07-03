@@ -34,9 +34,6 @@ DEFINE_string(image_list, "", "Path of test image list file");
 DEFINE_string(device, "CPU", "Device name");
 DEFINE_string(save_dir, "output", "Path to save visualized image");
 DEFINE_int32(batch_size, 1, "Batch size of infering");
-DEFINE_int32(thread_num,
-             omp_get_num_procs(),
-             "Number of preprocessing threads");
 
 
 int main(int argc, char** argv) {
@@ -55,9 +52,10 @@ int main(int argc, char** argv) {
   }
 
   //
+  std::cout << "init start" << std::endl;
   PaddleX::Model model; 
   model.Init(FLAGS_model_dir, FLAGS_cfg_dir, FLAGS_device);
-  
+  std::cout << "init done" << std::endl;
   int imgs = 1;
   auto colormap = PaddleX::GenerateColorMap(model.labels.size());
   
@@ -89,14 +87,17 @@ int main(int argc, char** argv) {
   }else{
     PaddleX::SegResult result;
     cv::Mat im = cv::imread(FLAGS_image, 1);
+    std::cout << "predict start" << std::endl;
     model.predict(im, &result);
+    std::cout << "predict done" << std::endl; 
     //
     cv::Mat vis_img = PaddleX::Visualize(im, result, model.labels, colormap);
+
     std::string save_path =
         PaddleX::generate_save_path(FLAGS_save_dir, FLAGS_image);
     cv::imwrite(save_path, vis_img);
     result.clear();
-    std::cout << "Visualized output saved as " << save_path << std::endl;
+    std::cout << "Visualized` output saved as " << save_path << std::endl;
   }
   return 0;
 }

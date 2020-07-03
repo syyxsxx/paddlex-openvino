@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -225,11 +226,14 @@ bool Transforms::Run(cv::Mat* im, ImageBlob* data) {
   MemoryBlob::Ptr mblob = InferenceEngine::as<MemoryBlob>(data->blob);
   auto mblobHolder = mblob->wmap();
   float *blob_data = mblobHolder.as<float *>();
+  std::ofstream out("./input_data.txt",std::ios::app);
+    
   for (size_t c = 0; c < channels; c++) {
       for (size_t  h = 0; h < height; h++) {
           for (size_t w = 0; w < width; w++) {
               blob_data[c * width * height + h * width + w] =
                       im->at<cv::Vec3f>(h, w)[c];
+              out << im->at<cv::Vec3f>(h, w)[c] << std::endl;
           }
       }
   }

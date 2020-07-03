@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "include/paddlex/paddlex.h"
+#include <iostream>
+#include <fstream>
 
 using namespace InferenceEngine;
 
@@ -99,6 +101,7 @@ bool Model::predict(const cv::Mat& im, ClsResult* result, double &total_time, in
   }  
 
   std::string output_name = network_.getOutputsInfo().begin()->first;
+  std::cout << "ouput node name" << output_name << std::endl;
   output_ = infer_request.GetBlob(output_name);
   MemoryBlob::CPtr moutput = as<MemoryBlob>(output_);
   auto moutputHolder = moutput->rmap();
@@ -114,6 +117,36 @@ bool Model::predict(const cv::Mat& im, ClsResult* result, double &total_time, in
   //    std::cout <<  outputs_[i] << std::endl;
   //    }
 }
+
+/*bool Model::predict(const cv::Mat& im, DetResult* result) {
+  inputs_.clear();
+  result->clear();
+  if (type == "classifier") {
+    std::cerr << "Loading model is a 'classifier', ClsResult should be passed "
+                 "to function predict()!" << std::endl;
+    return false;
+  } else if (type == "segmenter") {
+    std::cerr << "Loading model is a 'segmenter', SegResult should be passed "
+                 "to function predict()!" << std::endl;
+    return false;
+  }
+  InferRequest infer_request = executable_network_.CreateInferRequest();
+  std::string input_name = network_.getInputsInfo().begin()->first;
+  inputs_.blob = infer_request.GetBlob(input_name);
+  
+  cv::Mat im_clone = im.clone();
+  if (!preprocess(&im_clone, &inputs_)) {
+    std::cerr << "Preprocess failed!" << std::endl;
+    return false;
+  }
+  
+  if (name == "YOLOv3") {
+    Blob::Ptr im_size_blob = infer_request.GetBlob("im_size");
+    MemoryBlob::Ptr isblob = InferenceEngine::as<MemoryBlob>(im_size_blob); 
+    auto isblobHolder = isblob->wmap();
+    float *isblob_data = isblobHolder.as<float *>();
+    isblob_data[0] = 
+}*/
 
 /*bool Model::predict(const std::vector<cv::Mat>& im_batch,
                     std::vector<SegResult>* result,
@@ -158,28 +191,20 @@ bool Model::predict(const cv::Mat& im, SegResult* result) {
 
   //
   infer_request.Infer();
-   
-  std::string output_name_label = network_.getOutputsInfo().begin()->first;
-  Blob::Ptr output_label = infer_request.GetBlob(output_name_label);
-  MemoryBlob::CPtr moutput_label = as<MemoryBlob>(output_label);
-  TensorDesc blob_label = moutput_label->getTensorDesc();
-  std::vector<size_t> output_label_shape = blob_label.getDims();
-  int size = 1;
-  for (auto& i : output_label_shape) {
-    size *= static_cast<int>(i);
-    result->label_map.shape.push_back(static_cast<int>(i));
-  }
-  result->label_map.data.resize(size);
-  auto moutputHolder_label = moutput_label->rmap();
-  int64_t* label_data = moutputHolder_label.as<int64_t *>();
-  memcpy(result->label_map.data.data(),label_data,moutput_label->byteSize());
-  
-  std::string output_name_score = network_.getOutputsInfo().end()->first;
+ 
+  std::ofstream score_out("./score_map.txt",std::ios::app);
+  std::ofstream label_out("./label_map.txt",std::ios::app);
+ 
+  OutputsDataMap out_map = network_.getOutputsInfo();
+  auto iter = out_map.begin();
+  iter++;
+  std::string output_name_score = iter->first;
+  std::cout << iter->first  << std::endl;
   Blob::Ptr output_score = infer_request.GetBlob(output_name_score);
   MemoryBlob::CPtr moutput_score = as<MemoryBlob>(output_score);
   TensorDesc blob_score = moutput_score->getTensorDesc();
   std::vector<size_t> output_score_shape = blob_score.getDims();
-  size = 1;
+  int size = 1;
   for (auto& i : output_score_shape) {
     size *= static_cast<int>(i);
     result->score_map.shape.push_back(static_cast<int>(i));
@@ -188,6 +213,32 @@ bool Model::predict(const cv::Mat& im, SegResult* result) {
   auto moutputHolder_score = moutput_score->rmap();
   float* score_data = moutputHolder_score.as<float *>();
   memcpy(result->score_map.data.data(),score_data,moutput_score->byteSize());
+  for (int i=0;i<512*512*2;i++)
+  {
+    score_out << score_data[i] << std::endl;
+  }
+
+  iter++;
+  std::string output_name_label = iter->first;
+  std::cout << iter->first  << std::endl;
+  Blob::Ptr output_label = infer_request.GetBlob(output_name_label);
+  MemoryBlob::CPtr moutput_label = as<MemoryBlob>(output_label);
+  TensorDesc blob_label = moutput_label->getTensorDesc();
+  std::vector<size_t> output_label_shape = blob_label.getDims();
+  size = 1;
+  for (auto& i : output_label_shape) {
+    size *= static_cast<int>(i);
+    result->label_map.shape.push_back(static_cast<int>(i));
+  }
+  result->label_map.data.resize(size);
+  auto moutputHolder_label = moutput_label->rmap();
+  int* label_data = moutputHolder_label.as<int *>();
+  memcpy(result->label_map.data.data(),label_data,moutput_label->byteSize());
+
+  for (int i=0;i<512*512*1;i++)
+  { 
+    label_out << label_data[i] << std::endl;
+  }
 
   std::vector<uint8_t> label_map(result->label_map.data.begin(),
                                  result->label_map.data.end());

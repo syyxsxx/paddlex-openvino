@@ -114,7 +114,7 @@ class Predictor:
 
 
     def raw_predict(self, images):
-        input_blob = next(iter(self.net.input_info))
+        input_blob = next(iter(self.net.inputs))
         out_blob = next(iter(self.net.outputs)) 
         #Start sync inference
         logging.info("Starting inference in synchronous mode")

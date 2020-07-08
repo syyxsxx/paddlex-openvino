@@ -68,7 +68,7 @@ bool Model::preprocess(cv::Mat* input_im, ImageBlob* inputs) {
   return true;
 }
 
-bool Model::predict(const cv::Mat& im, ClsResult* result, double &total_time, int count_num) {
+bool Model::predict(const cv::Mat& im, ClsResult* result) {
   inputs_.clear();
   if (type == "detector") {
     std::cerr << "Loading model is a 'detector', DetResult should be passed to "
@@ -96,8 +96,8 @@ bool Model::predict(const cv::Mat& im, ClsResult* result, double &total_time, in
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::chrono::duration<double> time_used = std::chrono::duration_cast<std::chrono::duration<double>>(end-start);
   std::cout << "time use:" << time_used.count() << "s" << std::endl;
-  if (count_num >= 20){
-    total_time = total_time + time_used.count();
+  if (count_num_ >= 20){
+    total_time_ = total_time_ + time_used.count();
   }  
 
   std::string output_name = network_.getOutputsInfo().begin()->first;
@@ -190,7 +190,14 @@ bool Model::predict(const cv::Mat& im, SegResult* result) {
   }
 
   //
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
   infer_request.Infer();
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::chrono::duration<double> time_used = std::chrono::duration_cast<std::chrono::duration<double>>(end-start);
+  std::cout << "time use:" << time_used.count() << "s" << std::endl;
+  if (count_num_ >= 20){
+    total_time_ = total_time_ + time_used.count();
+  }
  
   std::ofstream score_out("./score_map.txt",std::ios::app);
   std::ofstream label_out("./label_map.txt",std::ios::app);

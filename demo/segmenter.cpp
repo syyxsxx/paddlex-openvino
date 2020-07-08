@@ -13,10 +13,8 @@
 // limitations under the License.
 
 #include <glog/logging.h>
-#include <omp.h>
 
 #include <algorithm>
-#include <chrono>  // NOLINT
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -25,14 +23,13 @@
 #include "include/paddlex/paddlex.h"
 #include "include/paddlex/visualize.h"
 
-using namespace std::chrono;  // NOLINT
 
 DEFINE_string(model_dir, "", "Path of openvino model xml file");
 DEFINE_string(cfg_dir, "", "Path of PaddleX model yaml file");
 DEFINE_string(image, "", "Path of test image file");
 DEFINE_string(image_list, "", "Path of test image list file");
 DEFINE_string(device, "CPU", "Device name");
-DEFINE_string(save_dir, "output", "Path to save visualized image");
+DEFINE_string(save_dir, "", "Path to save visualized image");
 DEFINE_int32(batch_size, 1, "Batch size of infering");
 
 
@@ -60,44 +57,42 @@ int main(int argc, char** argv) {
   auto colormap = PaddleX::GenerateColorMap(model.labels.size());
   
   if (FLAGS_image_list != "") {
-    /*std::ifstream inf(FLAGS_image_list);
+    std::ifstream inf(FLAGS_image_list);
     if (!inf) {
-      std::cerr << "Fail to open file " << FLAGS_image_list << std::endl;
-      return -1;
+    std::cerr << "Fail to open file " << FLAGS_image_list <<std::endl;
+    return -1;
     }
     std::string image_path;
-    std::vector<std::string> image_paths;
+    model.total_time_ = 0.0f;
+    model.count_num_ = 0;
     while (getline(inf, image_path)) {
-      image_paths.push_back(image_path);
-    }  
-    imgs = image_paths.size();
-    for (int i = 0; i < image_paths.size(); i += FLAGS_batch_size) {
-    int im_vec_size =
-          std::min(static_cast<int>(image_paths.size()), i + FLAGS_batch_size);
-      std::vector<cv::Mat> im_vec(im_vec_size - i);
-      std::vector<PaddleX::SegResult> results(im_vec_size - i,
-                                              PaddleX::SegResult());
-    int thread_num = std::min(FLAGS_thread_num, im_vec_size - i);
-    #pragma omp parallel for num_threads(thread_num)
-    for (int j = i; j < im_vec_size; ++j) {
-      im_vec[j - i] = std::move(cv::imread(image_paths[j], 1));
+      PaddleX::SegResult result;
+      cv::Mat im = cv::imread(image_path, 1);
+      model.predict(im, &result);
+      if(FLAGS_save_dir != ""){
+      cv::Mat vis_img = PaddleX::Visualize(im, result, model.labels, colormap);
+        std::string save_path =
+          PaddleX::generate_save_path(FLAGS_save_dir, image_path);
+        cv::imwrite(save_path, vis_img);
+        std::cout << "Visualized output saved as " << save_path << std::endl;
+      }
+      model.count_num_++;
     }
-    auto imread_end = system_clock::now();
-    model.predict(im_vec, &results, thread_num);*/
+    std::cout << "im per ms: " << model.total_time_*10 << std::endl;
   }else{
     PaddleX::SegResult result;
     cv::Mat im = cv::imread(FLAGS_image, 1);
     std::cout << "predict start" << std::endl;
     model.predict(im, &result);
     std::cout << "predict done" << std::endl; 
-    //
-    cv::Mat vis_img = PaddleX::Visualize(im, result, model.labels, colormap);
-
-    std::string save_path =
-        PaddleX::generate_save_path(FLAGS_save_dir, FLAGS_image);
-    cv::imwrite(save_path, vis_img);
+    if(FLAGS_save_dir != ""){
+      cv::Mat vis_img = PaddleX::Visualize(im, result, model.labels, colormap);
+      std::string save_path =
+          PaddleX::generate_save_path(FLAGS_save_dir, FLAGS_image);
+      cv::imwrite(save_path, vis_img);
+      std::cout << "Visualized` output saved as " << save_path << std::endl;
+    }
     result.clear();
-    std::cout << "Visualized` output saved as " << save_path << std::endl;
   }
   return 0;
 }

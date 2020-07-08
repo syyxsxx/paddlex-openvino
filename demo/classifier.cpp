@@ -56,25 +56,23 @@ int main(int argc, char** argv) {
       return -1;
     }
     std::string image_path;
-    double total_time = 0.0f;
-    int count_num = 0;
+    model.total_time_ = 0.0f;
+    model.count_num_ = 0;
     while (getline(inf, image_path)) {
       PaddleX::ClsResult result;
       cv::Mat im = cv::imread(image_path, 1);
-      model.predict(im, &result, total_time, count_num);
+      model.predict(im, &result);
       std::cout << "Predict label: " << result.category
                 << ", label_id:" << result.category_id
                 << ", score: " << result.score 
-                << ", num_img: " << count_num << std::endl;
-      count_num++;
+                << ", num_img: " << model.count_num_ << std::endl;
+      model.count_num_++;
     }
-    std::cout << "im per ms: " << total_time*10 << std::endl;
+    std::cout << "im per ms: " << model.total_time_*10 << std::endl;
   } else {
-    double total_time = 0.0f;
-    int count_num = 0;
     PaddleX::ClsResult result;
     cv::Mat im = cv::imread(FLAGS_image, 1);
-    model.predict(im, &result, total_time, count_num);
+    model.predict(im, &result);
     std::cout << "Predict label: " << result.category
               << ", label_id:" << result.category_id
               << ", score: " << result.score << std::endl;

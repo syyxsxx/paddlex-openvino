@@ -51,7 +51,7 @@ class Model {
 
   bool preprocess(cv::Mat* input_im, ImageBlob* inputs);
 
-  bool predict(const cv::Mat& im, ClsResult* result, double &total_time, int count_num);
+  bool predict(const cv::Mat& im, ClsResult* result);
   
   bool predict(const cv::Mat& im, SegResult* result);
 
@@ -59,6 +59,8 @@ class Model {
   std::string type;
   std::string name;
   std::map<int, std::string> labels;
+  double total_time_;
+  int count_num_;
   Transforms transforms_;
   ImageBlob inputs_;
   Blob::Ptr output_;

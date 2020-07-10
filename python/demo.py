@@ -72,8 +72,16 @@ def main():
         predictor = deploy.Predictor(model_xml,model_yaml)
     
     #predict
-    im_path = args.img
-    predictor.predict(im_path)
+    if(args.img_list != None):
+        f = open(args.img_list)
+        lines = f.readlines()
+        for im_path in lines:
+            print(im_path)
+            predictor.predict(im_path.strip('\n'))
+        f.close()
+    else:
+        im_path = args.img
+        predictor.predict(im_path)
 
 if __name__ == "__main__":
     main()

@@ -15,6 +15,7 @@
 import sys
 import os
 import os.path as osp
+import time
 import cv2
 import numpy as np
 import yaml
@@ -54,7 +55,9 @@ class Predictor:
         else:
             to_rgb = False
         self.transforms = self.build_transforms(self.info['Transforms'], to_rgb)
-        self.predictor,self.net = self.create_predictor()
+        self.predictor, self.net = self.create_predictor()
+        self.total_time = 0
+        self.count_num = 0
 
 
 
@@ -98,10 +101,10 @@ class Predictor:
             import transforms.cls_transforms as transforms
             arrange_transform = transforms.ArrangeClassifier
         elif self.model_type == 'segmenter':
-            import transforms.det_transforms as transforms
+            import transforms.seg_transforms as transforms
             arrange_transform = transforms.ArrangeSegmenter
         elif self.model_type == 'detector':
-            import transforms.seg_transforms as transforms
+            import transforms.det_transforms as transforms
             arrange_name = 'Arrange{}'.format(self.model_name)
             arrange_transform = getattr(transforms, arrange_name)
         else:
@@ -114,24 +117,30 @@ class Predictor:
 
 
     def raw_predict(self, images):
+        self.count_num += 1
         input_blob = next(iter(self.net.inputs))
-        out_blob = next(iter(self.net.outputs)) 
         #Start sync inference
         logging.info("Starting inference in synchronous mode")
+        start_time = time.time()
         res = self.predictor.infer(inputs={input_blob:images})
-    
+        time_use = time.time() - start_time
+        if(self.count_num >= 20):
+            self.total_time += time_use
+        if(self.count_num >= 120):
+            print("avgtime:", self.total_time*10)
+ 
         #Processing output blob
         logging.info("Processing output blob")
-        res = res[out_blob]
-        print("res: ",res)
+        return res
+        
 
     def preprocess(self, image):
-        
+        res = dict() 
         if self.model_type == "classifier":
             im, = self.transforms(image)
             im = np.expand_dims(im, axis=0).copy()
-            #res['image'] = im
-        '''elif self.model_type == "detector":
+            res['image'] = im
+        elif self.model_type == "detector":
             if self.model_name == "YOLOv3":
                 im, im_shape = self.transforms(image)
                 im = np.expand_dims(im, axis=0).copy()
@@ -150,11 +159,60 @@ class Predictor:
             im, im_info = self.transforms(image)
             im = np.expand_dims(im, axis=0).copy()
             res['image'] = im
-            res['im_info'] = im_info'''
-        return im
+            res['im_info'] = im_info
+        return res
+    
 
+    def classifier_postprocess(self, preds, topk=1):
+        """ 对分类模型的预测结果做后处理
+        """
+        true_topk = min(self.num_classes, topk)
+        output_name = next(iter(self.net.outputs))
+        pred_label = np.argsort(-preds[output_name][0])[:true_topk]
+        result = [{
+            'category_id': l,
+            'category': self.labels[l],
+            'score': preds[output_name][0][l],
+        } for l in pred_label]
+        print(result)
+        return result 
+
+    def segmenter_postprocess(self, preds, preprocessed_inputs):
+        """ 对语义分割结果做后处理
+        """
+        it = iter(self.net.outputs)
+        next(it)
+        score_name = next(it)
+        np.savetxt('./score_map.txt',preds[score_name].flatten())
+        score_map = np.squeeze(preds[score_name])
+        score_map = np.transpose(score_map, (1, 2, 0))
+        label_name = next(it)
+        np.savetxt('./label_map.txt',preds[label_name].flatten())
+        label_map = np.squeeze(preds[label_name]).astype('uint8')
+        im_info = preprocessed_inputs['im_info']
+        for info in im_info[::-1]:
+            if info[0] == 'resize':
+                w, h = info[1][1], info[1][0]
+                label_map = cv2.resize(label_map, (w, h), cv2.INTER_NEAREST)
+                score_map = cv2.resize(score_map, (w, h), cv2.INTER_LINEAR)
+            elif info[0] == 'padding':
+                w, h = info[1][1], info[1][0]
+                label_map = label_map[0:h, 0:w]
+                score_map = score_map[0:h, 0:w, :]
+            else:
+                raise Exception("Unexpected info '{}' in im_info".format(info[
+                    0]))
+        return {'label_map': label_map, 'score_map': score_map}
+        
 
     def predict(self, image, topk=1, threshold=0.5):
         preprocessed_input = self.preprocess(image)
-        model_pred = self.raw_predict(preprocessed_input)
+        model_pred = self.raw_predict(preprocessed_input['image'])
+        if self.model_type == "classifier":
+            results = self.classifier_postprocess(model_pred, topk)
+        #elif self.model_type == "detector":
+            #results = self.detector_postprocess(model_pred, preprocessed_input)
+        elif self.model_type == "segmenter":
+            results = self.segmenter_postprocess(model_pred,
+                                                 preprocessed_input) 
 

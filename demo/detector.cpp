@@ -19,11 +19,11 @@ DEFINE_string(cfg_dir, "", "Path of PaddleX model yaml file");
 DEFINE_string(image, "", "Path of test image file");
 DEFINE_string(image_list, "", "Path of test image list file");
 DEFINE_string(device, "CPU", "Device name");
-DEFINE_string(save_dir, "output", "Path to save visualized image");
+DEFINE_string(save_dir, "", "Path to save visualized image");
 DEFINE_int32(batch_size, 1, "Batch size of infering");
-DEFINE_int32(thread_num,
-             omp_get_num_procs(),
-             "Number of preprocessing threads");
+DEFINE_double(threshold,
+              0.5,
+              "The minimum scores of target boxes which are shown");
 
 int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
@@ -46,12 +46,31 @@ int main(int argc, char** argv) {
 
   int imgs = 1;
   auto colormap = PaddleX::GenerateColorMap(model.labels.size());
-  std::string save_dir = "output";
   // 进行预测
   if (FLAGS_image_list != "") {
-  /*
-  to be imp
-  */
+    std::ifstream inf(FLAGS_image_list);
+    if(!inf){
+      std::cerr << "Fail to open file " << FLAGS_image_list << std::endl;
+      return -1;
+    }
+    std::string image_path;
+    model.total_time_ = 0.0f;
+    model.count_num_ = 0;
+    while (getline(inf, image_path)) {
+      PaddleX::DetResult result;
+      cv::Mat im = cv::imread(image_path, 1);
+      model.predict(im, &result);
+      if(FLAGS_save_dir != ""){
+        cv::Mat vis_img =
+          PaddleX::Visualize(im, result, model.labels, colormap, FLAGS_threshold);  
+        std::string save_path =
+          PaddleX::generate_save_path(FLAGS_save_dir, FLAGS_image);      
+        cv::imwrite(save_path, vis_img);
+        std::cout << "Visualized output saved as " << save_path << std::endl;
+      }
+      model.count_num_++;
+    }
+    std::cout << "im per ms: " << model.total_time_*10 << std::endl;
   }else {
   PaddleX::DetResult result;
   cv::Mat im = cv::imread(FLAGS_image, 1);
@@ -66,15 +85,16 @@ int main(int argc, char** argv) {
                 << result.boxes[i].coordinate[2] << ", "
                 << result.boxes[i].coordinate[3] << ")" << std::endl;
     }
-
+    if(FLAGS_save_dir != ""){
     // 可视化
-    cv::Mat vis_img =
-        PaddleX::Visualize(im, result, model.labels, colormap, FLAGS_threshold);
-    std::string save_path =
-        PaddleX::generate_save_path(FLAGS_save_dir, FLAGS_image);
-    cv::imwrite(save_path, vis_img);
-    result.clear();
-    std::cout << "Visualized output saved as " << save_path << std::endl;
+      cv::Mat vis_img =
+          PaddleX::Visualize(im, result, model.labels, colormap, FLAGS_threshold);
+      std::string save_path =
+          PaddleX::generate_save_path(FLAGS_save_dir, FLAGS_image);
+      cv::imwrite(save_path, vis_img);
+      result.clear();
+      std::cout << "Visualized output saved as " << save_path << std::endl;
+    }
   }
   return 0;
 }

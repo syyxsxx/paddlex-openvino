@@ -112,3 +112,7 @@ target_link_libraries(classifier ${DEPS})
 add_executable(segmenter demo/segmenter.cpp src/transforms.cpp src/paddlex.cpp src/visualize.cpp)
 ADD_DEPENDENCIES(segmenter ext-yaml-cpp)
 target_link_libraries(segmenter ${DEPS})
+
+add_executable(detector demo/detector.cpp src/transforms.cpp src/paddlex.cpp src/visualize.cpp)
+ADD_DEPENDENCIES(detector ext-yaml-cpp)
+target_link_libraries(detector ${DEPS})

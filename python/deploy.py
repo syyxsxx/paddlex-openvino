@@ -158,6 +158,7 @@ class Predictor:
         elif self.model_type == "segmenter":
             im, im_info = self.transforms(image)
             im = np.expand_dims(im, axis=0).copy()
+            #np.savetxt('./input_data.txt',im.flatten())
             res['image'] = im
             res['im_info'] = im_info
         return res
@@ -183,11 +184,11 @@ class Predictor:
         it = iter(self.net.outputs)
         next(it)
         score_name = next(it)
-        np.savetxt('./score_map.txt',preds[score_name].flatten())
+        #np.savetxt('./score_map.txt',preds[score_name].flatten())
         score_map = np.squeeze(preds[score_name])
         score_map = np.transpose(score_map, (1, 2, 0))
         label_name = next(it)
-        np.savetxt('./label_map.txt',preds[label_name].flatten())
+        #np.savetxt('./label_map.txt',preds[label_name].flatten())
         label_map = np.squeeze(preds[label_name]).astype('uint8')
         im_info = preprocessed_inputs['im_info']
         for info in im_info[::-1]:

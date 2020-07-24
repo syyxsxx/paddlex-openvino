@@ -26,11 +26,24 @@ void Model::create_predictor(const std::string& model_dir,
     Core ie;
     network_ = ie.ReadNetwork(model_dir, model_dir.substr(0, model_dir.size() - 4) + ".bin");
     network_.setBatchSize(1);
-    InputInfo::Ptr input_info = network_.getInputsInfo().begin()->second;
 
-    input_info->getPreProcess().setResizeAlgorithm(RESIZE_BILINEAR);
-    input_info->setLayout(Layout::NCHW);
-    input_info->setPrecision(Precision::FP32);
+    InputsDataMap inputInfo(network_.getInputsInfo());
+    std::string imageInputName;
+    for (const auto & inputInfoItem : inputInfo) {
+      if (inputInfoItem.second->getTensorDesc().getDims().size() == 4){
+        imageInputName = inputInfoItem.first;
+        std::cout << "dim4: " << imageInputName << std::endl;
+        inputInfoItem.second->setPrecision(Precision::FP32);
+        inputInfoItem.second->getPreProcess().setResizeAlgorithm(RESIZE_BILINEAR);
+        inputInfoItem.second->setLayout(Layout::NCHW);
+      }
+      if (inputInfoItem.second->getTensorDesc().getDims().size() == 2){
+        imageInputName = inputInfoItem.first;
+        std::cout << "dim2: " << imageInputName << std::endl;
+        inputInfoItem.second->setPrecision(Precision::FP32);
+      }
+    }
+    
     executable_network_ = ie.LoadNetwork(network_, device);
     load_config(cfg_dir);
 }
@@ -118,7 +131,7 @@ bool Model::predict(const cv::Mat& im, ClsResult* result) {
   //    }
 }
 
-/*bool Model::predict(const cv::Mat& im, DetResult* result) {
+bool Model::predict(const cv::Mat& im, DetResult* result) {
   inputs_.clear();
   result->clear();
   if (type == "classifier") {
@@ -131,39 +144,66 @@ bool Model::predict(const cv::Mat& im, ClsResult* result) {
     return false;
   }
   InferRequest infer_request = executable_network_.CreateInferRequest();
-  std::string input_name = network_.getInputsInfo().begin()->first;
-  inputs_.blob = infer_request.GetBlob(input_name);
-  
+  InputsDataMap input_maps = network_.getInputsInfo();
+  std::string inputName;
+  for (const auto & input_map : input_maps) {
+    if (input_map.second->getTensorDesc().getDims().size() == 4){
+      inputName = input_map.first;
+      inputs_.blob = infer_request.GetBlob(inputName);
+    }
+    if (input_map.second->getTensorDesc().getDims().size() == 2){
+      inputName = input_map.first;
+      inputs_.ori_im_size_ = infer_request.GetBlob(inputName);
+    }
+  } 
   cv::Mat im_clone = im.clone();
   if (!preprocess(&im_clone, &inputs_)) {
     std::cerr << "Preprocess failed!" << std::endl;
     return false;
   }
   
-  if (name == "YOLOv3") {
-    Blob::Ptr im_size_blob = infer_request.GetBlob("im_size");
-    MemoryBlob::Ptr isblob = InferenceEngine::as<MemoryBlob>(im_size_blob); 
-    auto isblobHolder = isblob->wmap();
-    float *isblob_data = isblobHolder.as<float *>();
-    isblob_data[0] = 
-}*/
-
-/*bool Model::predict(const std::vector<cv::Mat>& im_batch,
-                    std::vector<SegResult>* result,
-                    int thread_num) {
-
-
-  if (type == "classifier") {
-    std::cerr << "Loading model is a 'classifier', ClsResult should be passed "
-                 "to function predict()!" << std::endl;
-    return false;
-  } else if (type == "detector") {
-    std::cerr << "Loading model is a 'detector', DetResult should be passed to "
-                 "function predict()!" << std::endl;
-    return false;
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+  infer_request.Infer();
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::chrono::duration<double> time_used = std::chrono::duration_cast<std::chrono::duration<double>>(end-start);
+  std::cout << "time use:" << time_used.count() << "s" << std::endl;
+  if (count_num_ >= 20){
+    total_time_ = total_time_ + time_used.count();
   }
 
-*/
+  OutputsDataMap out_map = network_.getOutputsInfo(); 
+  auto iter = out_map.begin();
+  std::string outputName = iter->first;
+  std::cout << "output: " << outputName << std::endl;
+  Blob::Ptr output = infer_request.GetBlob(outputName);
+  MemoryBlob::CPtr moutput = as<MemoryBlob>(output);
+  TensorDesc blob_output = moutput->getTensorDesc();
+  std::vector<size_t> output_shape = blob_output.getDims();
+  auto moutputHolder = moutput->rmap();
+  float* data = moutputHolder.as<float *>();
+  int size = 1;
+  for (auto& i : output_shape){
+    size *= static_cast<int>(i);
+  }
+  int num_boxes = size / 6;
+  for (int i = 0; i < num_boxes; ++i){
+    if(data[i * 6] > 0){
+      Box box;
+      box.category_id = static_cast<int>(data[i * 6]);
+      box.category = labels[box.category_id];
+      box.score = data[i * 6 + 1];
+      float xmin = data[i * 6 + 2];
+      float ymin = data[i * 6 + 3];
+      float xmax = data[i * 6 + 4];
+      float ymax = data[i * 6 + 5];
+      float w = xmax - xmin + 1;
+      float h = ymax - ymin + 1;
+      box.coordinate = {xmin, ymin, w, h};
+      result->boxes.push_back(std::move(box));
+    }
+  }
+}
+
 
 bool Model::predict(const cv::Mat& im, SegResult* result) {
   result->clear();

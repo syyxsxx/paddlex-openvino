@@ -53,6 +53,8 @@ class Model {
 
   bool predict(const cv::Mat& im, ClsResult* result);
   
+  bool predict(const cv::Mat& im, DetResult* result);  
+
   bool predict(const cv::Mat& im, SegResult* result);
 
 

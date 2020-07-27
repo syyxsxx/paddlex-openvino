@@ -116,13 +116,25 @@ class Predictor:
             eval_transforms.transforms.append(arrange_transform(mode='test'))
 
 
-    def raw_predict(self, images):
+    def raw_predict(self, preprocessed_input):
         self.count_num += 1
-        input_blob = next(iter(self.net.inputs))
+        feed_dict = {}
+        if self.model_name == "YOLOv3":
+            inputs = self.net.inputs 
+            for name in inputs:
+                if(len(inputs[name].shape) == 2):
+                    feed_dict[name] = preprocessed_input['im_size']
+                elif(len(inputs[name].shape) == 4):
+                    feed_dict[name] = preprocessed_input['image']
+                else:
+                    pass
+        else:
+            input_blob = next(iter(self.net.inputs))
+            feed_dict[input_blob] = preprocessed_input['image']
         #Start sync inference
         logging.info("Starting inference in synchronous mode")
         start_time = time.time()
-        res = self.predictor.infer(inputs={input_blob:images})
+        res = self.predictor.infer(inputs=feed_dict)
         time_use = time.time() - start_time
         if(self.count_num >= 20):
             self.total_time += time_use
@@ -205,14 +217,28 @@ class Predictor:
                     0]))
         return {'label_map': label_map, 'score_map': score_map}
         
+    def detector_postprocess(self, preds, preprocessed_inputs):
+        """对图像检测结果做后处理
+        """
+        output_name = next(iter(self.net.outputs))
+        outputs = preds[output_name][0]
+        result = []
+        for out in outputs:
+            if(out[0] > 0):
+                result.append(out.tolist())
+            else:
+                pass
+        print(result)
+        return result
+
 
     def predict(self, image, topk=1, threshold=0.5):
         preprocessed_input = self.preprocess(image)
-        model_pred = self.raw_predict(preprocessed_input['image'])
+        model_pred = self.raw_predict(preprocessed_input)
         if self.model_type == "classifier":
             results = self.classifier_postprocess(model_pred, topk)
-        #elif self.model_type == "detector":
-            #results = self.detector_postprocess(model_pred, preprocessed_input)
+        elif self.model_type == "detector":
+            results = self.detector_postprocess(model_pred, preprocessed_input)
         elif self.model_type == "segmenter":
             results = self.segmenter_postprocess(model_pred,
                                                  preprocessed_input) 

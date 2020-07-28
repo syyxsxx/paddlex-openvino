@@ -213,13 +213,14 @@ class Padding : public Transform {
 
 class Transforms {
  public:
-  void Init(const YAML::Node& node, bool to_rgb = true);
+  void Init(const YAML::Node& node, std::string type, bool to_rgb = true);
   std::shared_ptr<Transform> CreateTransform(const std::string& name);
   bool Run(cv::Mat* im, ImageBlob* data);
 
  private:
   std::vector<std::shared_ptr<Transform>> transforms_;
   bool to_rgb_ = true;
+  std::string type_;
 };
 
 }  // namespace PaddleX

@@ -64,7 +64,7 @@ bool Model::load_config(const std::string& cfg_dir) {
     }
   }
   // 构建数据处理流
-  transforms_.Init(config["Transforms"], to_rgb);
+  transforms_.Init(config["Transforms"], type, to_rgb);
   // 读入label lis
   for (const auto& item : config["_Attributes"]["labels"]) {
     int index = labels.size();

@@ -165,9 +165,10 @@ bool Resize::Run(cv::Mat* im, ImageBlob* data) {
   return true;
 }
 
-void Transforms::Init(const YAML::Node& transforms_node, bool to_rgb) {
+void Transforms::Init(const YAML::Node& transforms_node, std::string type, bool to_rgb) {
   transforms_.clear();
   to_rgb_ = to_rgb;
+  type_ = type;
   for (const auto& item : transforms_node) {
     std::string name = item.begin()->first.as<std::string>();
     std::cout << "trans name: " << name << std::endl;
@@ -205,11 +206,12 @@ bool Transforms::Run(cv::Mat* im, ImageBlob* data) {
   }
   (*im).convertTo(*im, CV_32FC3);
   
-  LockedMemory<void> input2Mapped = as<MemoryBlob>(data->ori_im_size_)->wmap();
-  float *p = input2Mapped.as<float*>();
-  p[0] = im->rows;
-  p[1] = im->cols;
-  
+  if(type_ == "detector" ){
+    LockedMemory<void> input2Mapped = as<MemoryBlob>(data->ori_im_size_)->wmap();
+    float *p = input2Mapped.as<float*>();
+    p[0] = im->rows;
+    p[1] = im->cols;
+  }
   //data->ori_im_size_[0] = im->rows;
   //data->ori_im_size_[1] = im->cols;
   data->new_im_size_[0] = im->rows;

@@ -43,8 +43,13 @@ void Model::create_predictor(const std::string& model_dir,
         inputInfoItem.second->setPrecision(Precision::FP32);
       }
     }
-    
-    executable_network_ = ie.LoadNetwork(network_, device);
+    if(device == "MYRIAD"){
+      std::map<std::string, std::string> networkConfig;
+      networkConfig["VPU_HW_STAGES_OPTIMIZATION"] = "ON";
+      executable_network_ = ie.LoadNetwork(network_, device, networkConfig);
+    }else{
+      executable_network_ = ie.LoadNetwork(network_, device);
+    }
     load_config(cfg_dir);
 }
 

@@ -8,6 +8,7 @@ SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 SET(OPENVINO_DIR "" CACHE PATH "Location of libraries")
 SET(OPENCV_DIR "" CACHE PATH "Location of libraries")
 SET(GFLAGS_DIR "" CACHE PATH "Location of libraries")
+SET(GLOG_DIR "" CACHE PATH "Location of libraries")
 SET(NGRAPH_LIB "" CACHE PATH "Location of libraries")
 
 include(cmake/yaml-cpp.cmake)
@@ -39,6 +40,10 @@ if (NOT DEFINED GFLAGS_DIR OR ${GFLAGS_DIR} STREQUAL "")
     message(FATAL_ERROR "please set GFLAGS_DIR with -DGFLAGS_DIR=/path/gflags")
 endif()
 
+if (NOT DEFINED GLOG_DIR OR ${GLOG_DIR} STREQUAL "")
+    message(FATAL_ERROR "please set GLOG_DIR with -DLOG_DIR=/path/glog")
+endif()
+
 if (NOT DEFINED NGRAPH_LIB OR ${NGRAPH_LIB} STREQUAL "")
     message(FATAL_ERROR "please set NGRAPH_DIR with -DNGRAPH_DIR=/path/ngraph")
 endif()
@@ -51,6 +56,9 @@ include_directories("${OPENVINO_DIR}/external/tbb/include/tbb")
 
 link_directories("${GFLAGS_DIR}/lib")
 include_directories("${GFLAGS_DIR}/include")
+
+link_directories("${GLOG_DIR}/lib")
+include_directories("${GLOG_DIR}/include")
 
 link_directories("${NGRAPH_LIB}")
 link_directories("${NGRAPH_LIB}/lib")

@@ -12,6 +12,9 @@ GLOG_DIR=$(pwd)/deps/glog
 # opencv使用自带预编译版本
 OPENCV_DIR=$(pwd)/deps/opencv3gcc4.8/
 
+#cpu架构
+ARCH=x86
+
 #下载并编译third-part lib
 sh $(pwd)/scripts/install_third-party.sh
 
@@ -23,5 +26,6 @@ cmake .. \
     -DGFLAGS_DIR=${GFLAGS_DIR} \
     -DGLOG_DIR=${GLOG_DIR} \
     -DOPENVINO_DIR=${OPENVINO_DIR} \
-    -DNGRAPH_LIB=${NGRAPH_LIB} 
+    -DNGRAPH_LIB=${NGRAPH_LIB} \
+    -DARCH=${ARCH}
 make

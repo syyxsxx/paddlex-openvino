@@ -68,9 +68,12 @@ class Predictor:
         logging.info("Creating Inference Engine")
         ie = IECore()
         logging.info("Loading network files:\n\t{}\n\t{}".format(self.model_xml, self.model_bin))
-        net = ie.read_network(model=self.model_xml,weights=self.model_bin)
+        net = ie.read_network(model=self.model_xml, weights=self.model_bin)
         net.batch_size = 1
-        exec_net = ie.load_network(network=net,device_name=self.device)
+        network_config = {}
+        if self.device == "MYRIAD":
+            network_config = {'VPU_HW_STAGES_OPTIMIZATION':'NO'}
+        exec_net = ie.load_network(network=net, device_name=self.device, network_config)
         return exec_net, net
 
 

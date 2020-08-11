@@ -10,13 +10,13 @@ GFLAGS_DIR=$(pwd)/deps/gflags
 GLOG_DIR=$(pwd)/deps/glog
 
 # opencv使用自带预编译版本
-OPENCV_DIR=$(pwd)/deps/opencv3gcc4.8/
+OPENCV_DIR=$(pwd)/deps/opencv/
 
 #cpu架构
 ARCH=x86
 
 #下载并编译third-part lib
-sh $(pwd)/scripts/install_third-party.sh
+sh $(pwd)/scripts/install_third-party.sh ${ARCH}
 
 rm -rf build
 mkdir -p build

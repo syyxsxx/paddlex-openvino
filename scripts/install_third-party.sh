@@ -22,11 +22,15 @@ if [ ! -d "./deps/glog" ]; then
     cd ..
     cd ..
 fi
-OPENCV_URL=https://paddleseg.bj.bcebos.com/deploy/docker/opencv3gcc4.8.tar.bz2
-if [ ! -d "./deps/opencv3gcc4.8" ]; then
+if [$1 == "x86"]
+    OPENCV_URL=https://bj.bcebos.com/paddlex/deploy/x86opencv/opencv.tar.bz2
+else
+    OPENCV_URL=https://bj.bcebos.com/paddlex/deploy/armopencv/opencv.tar.bz2
+fi
+if [ ! -d "./deps/opencv" ]; then
     cd deps
     wget -c ${OPENCV_URL}
-    tar xvfj opencv3gcc4.8.tar.bz2
-    rm -rf opencv3gcc4.8.tar.bz2
+    tar xvfj opencv.tar.bz2
+    rm -rf opencv.tar.bz2
     cd ..
 fi

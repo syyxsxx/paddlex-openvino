@@ -1,12 +1,15 @@
-# openvino预编译库的路径
-LITE_DIR=/home/pi/wsy/Paddle-Lite/build.lite.armlinux.armv7hf.gcc/inference_lite_lib.armlinux.armv7hf/cxx
+# Paddle-Lite预编译库的路径
+LITE_DIR=/path/to/Paddle-Lite/inference/lib
+
 # gflags预编译库的路径
-GFLAGS_DIR=/home/pi/wsy/gflags/build
+GFLAGS_DIR=$(pwd)/deps/gflags
+# glog预编译库的路径
+GLOG_DIR=$(pwd)/deps/glog
 
 # opencv预编译库的路径, 如果使用自带预编译版本可不修改
-OPENCV_DIR=$INTEL_OPENVINO_DIR/opencv
+OPENCV_DIR=$(pwd)/deps/opencv
 # 下载自带预编译版本
-#sh $(pwd)/scripts/bootstrap.sh
+#sh $(pwd)/scripts/install_thrid-party.sh
 
 rm -rf build
 mkdir -p build

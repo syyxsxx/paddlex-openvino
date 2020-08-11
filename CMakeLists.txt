@@ -93,7 +93,7 @@ else()
 endif()
 
 if (ARCH STREQUAL "armv7")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a"
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a")
     if(WITH_STATIC_LIB)
         set(DEPS ${OPENVINO_DIR}/lib/armv7l/libinference_engine${CMAKE_STATIC_LIBRARY_SUFFIX})
 	    set(DEPS ${DEPS} ${OPENVINO_DIR}/lib/armv7l/libinference_engine_legacy${CMAKE_STATIC_LIBRARY_SUFFIX})

@@ -9,7 +9,7 @@ GLOG_DIR=$(pwd)/deps/glog
 # opencv预编译库的路径, 如果使用自带预编译版本可不修改
 OPENCV_DIR=$(pwd)/deps/opencv
 # 下载自带预编译版本
-#sh $(pwd)/scripts/install_thrid-party.sh
+exec $(pwd)/scripts/install_third-party.sh
 
 rm -rf build
 mkdir -p build

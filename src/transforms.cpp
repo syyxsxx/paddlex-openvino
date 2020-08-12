@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <vector>
+#include <math.h>
 
 #include "include/paddlex/transforms.h"
 
@@ -63,8 +63,8 @@ bool ResizeByShort::Run(cv::Mat* im, ImageBlob* data) {
   data->reshape_order_.push_back("resize");
 
   float scale = GenerateScale(*im);
-  int width = static_cast<int>(scale * im->cols);
-  int height = static_cast<int>(scale * im->rows);
+  int width = static_cast<int>(round(scale * im->cols));
+  int height = static_cast<int>(round(scale * im->rows));
   cv::resize(*im, *im, cv::Size(width, height), 0, 0, cv::INTER_LINEAR);
   
   data->new_im_size_[0] = im->rows;
@@ -211,7 +211,7 @@ bool Transforms::Run(cv::Mat* im, ImageBlob* data) {
   data->new_im_size_[1] = im->cols;
 
   for (int i = 0; i < transforms_.size(); ++i) {
-    if (!transforms_[i]->Run(im,data)) {
+    if (!transforms_[i]->Run(im, data)) {
       std::cerr << "Apply transforms to image failed!" << std::endl;
       return false;
     }

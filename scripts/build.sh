@@ -14,9 +14,10 @@ OPENCV_DIR=$(pwd)/deps/opencv/
 
 #cpu架构
 ARCH=x86
+export ARCH
 
 #下载并编译third-part lib
-sh $(pwd)/scripts/install_third-party.sh ${ARCH}
+sh $(pwd)/scripts/install_third-party.sh
 
 rm -rf build
 mkdir -p build

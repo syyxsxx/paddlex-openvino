@@ -23,7 +23,12 @@ def arg_parser():
         "--fixed_input_shape",
         "-fs",
         default=None,
-        help="export openvino model with  input shape:[h,w]")
+        help="export openvino model with  input shape:[w,h]")
+    parser.add_argument(
+        "--data_type",
+        "-dp",
+        default="FP32",
+        help="FP32 or FP16, the data_type of openvino IR")
     return parser
 
 
@@ -42,9 +47,8 @@ def export_openvino_model(model, args):
         logging.error(
             "You need to install x2paddle first, pip install x2paddle>=0.7.4")
         
-    from x2paddle.op_mapper.paddle_op_mapper import PaddleOpMapper
-    mapper = PaddleOpMapper()
-    mapper.convert(model.test_prog, args.save_dir)
+    import x2paddle.convert as x2pc
+    x2pc.paddle2onnx(args.model_dir, args.save_dir)
 
     import mo.main as mo
     from mo.utils.cli_parser import get_onnx_cli_parser
